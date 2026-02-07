@@ -1,0 +1,52 @@
+{
+  "name": "trivia-game",
+  "module": "src/server/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot src/server/index.ts",
+    "build": "tsc --noEmit",
+    "start": "bun src/server/index.ts",
+    "db:up": "docker start trivia-db 2>/dev/null || docker run -d --name trivia-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=trivia -v trivia-data:/var/lib/postgresql -p 5432:5432 postgres:18",
+    "db:down": "docker stop trivia-db",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "seed": "bun src/server/db/seed.ts",
+    "test": "bun test",
+    "lint": "eslint --format unix ./src --max-warnings=0",
+    "lint:fix": "eslint --format unix ./src --max-warnings=0 --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.7",
+    "postgres": "^3.4.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "@prettier/plugin-oxc": "^0.1.3",
+    "@types/bun": "latest",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "drizzle-kit": "^0.31.8",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-formatter-unix": "^9.0.1",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import-x": "^4.16.1",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1",
+    "prettier-plugin-ember-template-tag": "^2.1.3",
+    "typescript-eslint": "^8.54.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
