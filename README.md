@@ -4,16 +4,17 @@ A client-server trivia game built with Bun, Hono, React, and PostgreSQL + Drizzl
 
 ## Architecture
 
-- **Backend:** Hono HTTP framework on Bun, PostgreSQL via Drizzle ORM
+- **Backend:** Hono + @hono/zod-openapi on Bun, PostgreSQL via Drizzle ORM
 - **Frontend:** React 19 SPA served via Bun's HTML imports (no Vite)
 - **Auth:** Cookie-based sessions stored in DB, passwords hashed with `Bun.password`
+- **API:** OpenAPI-validated routes with Zod schemas, spec served at `/doc`
 
 ## Project Structure
 
 ```
 src/
   server/
-    index.ts              # Hono app + Bun.serve, serves API + static HTML
+    index.ts              # Hono app + Bun.serve, serves API + HTML + OpenAPI doc
     routes/
       auth.ts             # /api/auth/* (register, login, logout, me)
       game.ts             # /api/game/* + /api/categories
@@ -38,6 +39,8 @@ drizzle.config.ts
 ```
 
 ## API Endpoints
+
+All routes use `@hono/zod-openapi` — request/response validated by Zod schemas. OpenAPI spec at `GET /doc`.
 
 ### Auth
 

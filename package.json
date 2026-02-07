@@ -21,11 +21,13 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@hono/zod-openapi": "^1.2.1",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.7",
     "postgres": "^3.4.8",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
