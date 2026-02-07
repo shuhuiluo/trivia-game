@@ -46,7 +46,6 @@ describe("Full gameplay flow", () => {
   test("register -> start game -> correct answer -> stats -> leaderboard", async () => {
     // ---- 1. Register ----
     setMockResults([
-      [], // select: no existing user
       [{ id: 1, username: "player1", points: 100 }], // insert: create user
       undefined, // insert: create session
     ]);
@@ -153,9 +152,8 @@ describe("Full gameplay flow", () => {
   test("register -> start game -> wrong answer -> stats reflect loss", async () => {
     // ---- 1. Register ----
     setMockResults([
-      [],
-      [{ id: 2, username: "player2", points: 100 }],
-      undefined,
+      [{ id: 2, username: "player2", points: 100 }], // insert: create user
+      undefined, // insert: create session
     ]);
 
     const registerRes = await app.request(
@@ -235,9 +233,8 @@ describe("Session handling", () => {
   test("login after registration uses same user data", async () => {
     // Register
     setMockResults([
-      [],
-      [{ id: 1, username: "combo", points: 100 }],
-      undefined,
+      [{ id: 1, username: "combo", points: 100 }], // insert: create user
+      undefined, // insert: create session
     ]);
 
     const regRes = await app.request(
