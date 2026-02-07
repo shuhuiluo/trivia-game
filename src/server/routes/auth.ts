@@ -2,26 +2,14 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { eq } from "drizzle-orm";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 
+import {
+  credentialsSchema,
+  errorSchema,
+  userResponseSchema,
+} from "../../shared/schemas.ts";
 import { db } from "../db";
 import { sessions, users } from "../db/schema.ts";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.ts";
-
-const credentialsSchema = z.object({
-  username: z.string().min(3),
-  password: z.string().min(6),
-});
-
-const userResponseSchema = z.object({
-  user: z.object({
-    id: z.number(),
-    username: z.string(),
-    points: z.number(),
-  }),
-});
-
-const errorSchema = z.object({
-  error: z.string(),
-});
 
 async function createSession(userId: number): Promise<string> {
   const token = crypto.randomUUID();

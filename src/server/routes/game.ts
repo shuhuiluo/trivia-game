@@ -1,36 +1,17 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { and, count, eq, notInArray, sql } from "drizzle-orm";
 
+import {
+  answerRequestSchema,
+  answerResponseSchema,
+  categoriesResponseSchema,
+  errorSchema,
+  roundResponseSchema,
+  startGameSchema,
+} from "../../shared/schemas.ts";
 import { db } from "../db";
 import { categories, gameRounds, questions, users } from "../db/schema.ts";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.ts";
-
-// --- Schemas ---
-
-const categorySchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  questionCount: z.number(),
-});
-
-const roundResponseSchema = z.object({
-  round: z.object({
-    id: z.number(),
-    question: z.string(),
-    options: z.array(z.string()),
-  }),
-});
-
-const answerResponseSchema = z.object({
-  correct: z.boolean(),
-  correctIndex: z.number(),
-  pointsDelta: z.number(),
-  newBalance: z.number(),
-});
-
-const errorSchema = z.object({
-  error: z.string(),
-});
 
 // --- Routes ---
 
@@ -40,9 +21,7 @@ const categoriesRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
-          schema: z.object({ categories: z.array(categorySchema) }),
-        },
+        "application/json": { schema: categoriesResponseSchema },
       },
       description: "List of categories with question counts",
     },
@@ -56,12 +35,7 @@ const startRoute = createRoute({
   request: {
     body: {
       content: {
-        "application/json": {
-          schema: z.object({
-            categoryId: z.number(),
-            wager: z.number().int().min(1),
-          }),
-        },
+        "application/json": { schema: startGameSchema },
       },
     },
   },
@@ -88,12 +62,7 @@ const answerRoute = createRoute({
   request: {
     body: {
       content: {
-        "application/json": {
-          schema: z.object({
-            roundId: z.number(),
-            answerIndex: z.number().int().min(0).max(3),
-          }),
-        },
+        "application/json": { schema: answerRequestSchema },
       },
     },
   },

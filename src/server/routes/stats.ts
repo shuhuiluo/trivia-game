@@ -1,32 +1,14 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { desc } from "drizzle-orm";
 
+import {
+  errorSchema,
+  leaderboardResponseSchema,
+  statsSchema,
+} from "../../shared/schemas.ts";
 import { db } from "../db";
 import { users } from "../db/schema.ts";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.ts";
-
-// --- Schemas ---
-
-const statsSchema = z.object({
-  points: z.number(),
-  gamesPlayed: z.number(),
-  correct: z.number(),
-  incorrect: z.number(),
-  accuracy: z.number(),
-});
-
-const leaderboardSchema = z.object({
-  leaders: z.array(
-    z.object({
-      username: z.string(),
-      points: z.number(),
-    })
-  ),
-});
-
-const errorSchema = z.object({
-  error: z.string(),
-});
 
 // --- Routes ---
 
@@ -51,7 +33,7 @@ const leaderboardRoute = createRoute({
   path: "/api/leaderboard",
   responses: {
     200: {
-      content: { "application/json": { schema: leaderboardSchema } },
+      content: { "application/json": { schema: leaderboardResponseSchema } },
       description: "Top 10 users by points",
     },
   },
