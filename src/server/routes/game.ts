@@ -153,6 +153,13 @@ app.openapi(startRoute, async c => {
     return c.json({ error: "No questions available in this category" }, 400);
   }
 
+  let options: string[];
+  try {
+    options = JSON.parse(question.options);
+  } catch {
+    return c.json({ error: "Invalid question data" }, 400);
+  }
+
   const [round] = await db
     .insert(gameRounds)
     .values({
@@ -165,8 +172,6 @@ app.openapi(startRoute, async c => {
   if (!round) {
     return c.json({ error: "Failed to create game round" }, 400);
   }
-
-  const options: string[] = JSON.parse(question.options);
 
   return c.json(
     {
@@ -217,29 +222,31 @@ app.openapi(answerRoute, async c => {
   const correct = answerIndex === question.correctIndex;
   const pointsDelta = correct ? round.wager : -round.wager;
 
-  // Update the game round
-  await db
-    .update(gameRounds)
-    .set({ answerIndex, correct, pointsDelta })
-    .where(eq(gameRounds.id, roundId));
+  // Update round and user stats atomically
+  const [updatedUser] = await db.transaction(async tx => {
+    await tx
+      .update(gameRounds)
+      .set({ answerIndex, correct, pointsDelta })
+      .where(eq(gameRounds.id, roundId));
 
-  // Update user points and stats
-  await db
-    .update(users)
-    .set({
-      points: sql`${users.points} + ${pointsDelta}`,
-      gamesPlayed: sql`${users.gamesPlayed} + 1`,
-      correctAnswers: correct
-        ? sql`${users.correctAnswers} + 1`
-        : users.correctAnswers,
-      incorrectAnswers: correct
-        ? users.incorrectAnswers
-        : sql`${users.incorrectAnswers} + 1`,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, user.id));
+    return tx
+      .update(users)
+      .set({
+        points: sql`${users.points} + ${pointsDelta}`,
+        gamesPlayed: sql`${users.gamesPlayed} + 1`,
+        correctAnswers: correct
+          ? sql`${users.correctAnswers} + 1`
+          : users.correctAnswers,
+        incorrectAnswers: correct
+          ? users.incorrectAnswers
+          : sql`${users.incorrectAnswers} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id))
+      .returning({ points: users.points });
+  });
 
-  const newBalance = user.points + pointsDelta;
+  const newBalance = updatedUser?.points ?? user.points + pointsDelta;
 
   return c.json(
     {

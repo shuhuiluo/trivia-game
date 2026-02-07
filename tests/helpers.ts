@@ -32,14 +32,15 @@ export function DB_MOCK_FACTORY() {
     return chain;
   }
 
-  return {
-    db: {
-      select: (..._: any[]) => createChain(),
-      insert: (..._: any[]) => createChain(),
-      update: (..._: any[]) => createChain(),
-      delete: (..._: any[]) => createChain(),
-    },
+  const dbMethods = {
+    select: (..._: any[]) => createChain(),
+    insert: (..._: any[]) => createChain(),
+    update: (..._: any[]) => createChain(),
+    delete: (..._: any[]) => createChain(),
+    transaction: async (fn: Function) => fn(dbMethods),
   };
+
+  return { db: dbMethods };
 }
 
 // ---------------------------------------------------------------------------
