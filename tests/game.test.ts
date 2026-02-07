@@ -136,6 +136,24 @@ describe("POST /api/game/start", () => {
     expect(json.round.id).toBe(99);
   });
 
+  test("returns 400 when question options JSON is malformed", async () => {
+    setMockResults([
+      [MOCK_USER], // middleware: session lookup
+      [], // select: recently answered (none)
+      [{ ...MOCK_QUESTION, options: "not-valid-json" }], // malformed options
+      // no round INSERT — parse fails before it
+    ]);
+
+    const res = await authedPost("/api/game/start", {
+      categoryId: 1,
+      wager: 10,
+    });
+    expect(res.status).toBe(400);
+
+    const json = await res.json();
+    expect(json.error).toContain("Invalid question data");
+  });
+
   test("returns 400 when category has no questions at all", async () => {
     setMockResults([
       [MOCK_USER], // middleware: session lookup
@@ -189,8 +207,8 @@ describe("POST /api/game/answer", () => {
       [MOCK_USER], // middleware: session lookup
       [MOCK_ROUND], // select: find round (wager=10, not yet answered)
       [MOCK_QUESTION], // select: find question (correctIndex=3)
-      undefined, // update: game round
-      undefined, // update: user stats
+      undefined, // tx update: game round
+      [{ points: 110 }], // tx update: user stats (.returning)
     ]);
 
     const res = await authedPost("/api/game/answer", {
@@ -203,7 +221,7 @@ describe("POST /api/game/answer", () => {
     expect(json.correct).toBe(true);
     expect(json.correctIndex).toBe(3);
     expect(json.pointsDelta).toBe(10);
-    expect(json.newBalance).toBe(110); // 100 + 10
+    expect(json.newBalance).toBe(110);
   });
 
   test("deducts points for incorrect answer", async () => {
@@ -211,8 +229,8 @@ describe("POST /api/game/answer", () => {
       [MOCK_USER], // middleware: session lookup
       [MOCK_ROUND], // select: find round (wager=10)
       [MOCK_QUESTION], // select: find question (correctIndex=3)
-      undefined, // update: game round
-      undefined, // update: user stats
+      undefined, // tx update: game round
+      [{ points: 90 }], // tx update: user stats (.returning)
     ]);
 
     const res = await authedPost("/api/game/answer", {
@@ -225,7 +243,7 @@ describe("POST /api/game/answer", () => {
     expect(json.correct).toBe(false);
     expect(json.correctIndex).toBe(3);
     expect(json.pointsDelta).toBe(-10);
-    expect(json.newBalance).toBe(90); // 100 - 10
+    expect(json.newBalance).toBe(90);
   });
 
   test("returns 400 when round not found", async () => {

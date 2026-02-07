@@ -100,8 +100,8 @@ describe("Full gameplay flow", () => {
       [MOCK_USER], // middleware: session lookup
       [MOCK_ROUND], // select: find round (wager=10, unanswered)
       [MOCK_QUESTION], // select: find question (correctIndex=3)
-      undefined, // update: game round
-      undefined, // update: user stats
+      undefined, // tx update: game round
+      [{ points: 110 }], // tx update: user stats (.returning)
     ]);
 
     const answerRes = await app.request(
@@ -184,8 +184,8 @@ describe("Full gameplay flow", () => {
       [{ ...MOCK_USER, userId: 2, username: "player2" }],
       [{ ...MOCK_ROUND, id: 2, userId: 2, wager: 20 }],
       [MOCK_QUESTION], // correctIndex=3
-      undefined,
-      undefined,
+      undefined, // tx update: game round
+      [{ points: 80 }], // tx update: user stats (.returning)
     ]);
 
     const answerRes = await app.request(
