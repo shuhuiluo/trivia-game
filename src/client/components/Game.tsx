@@ -138,6 +138,13 @@ export default function Game({ user, setUser }: GameProps) {
                   placeholder={`1 - ${user.points}`}
                   required
                 />
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setWager(String(user.points))}
+                >
+                  Max
+                </button>
                 <button type="submit" disabled={loading}>
                   {loading ? "Starting..." : "Start"}
                 </button>
