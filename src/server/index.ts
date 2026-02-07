@@ -1,7 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-// eslint-disable-next-line import-x/no-unresolved
-import homepage from "../../client/index.html";
+import homepage from "../client/index.html";
 import authRoutes from "./routes/auth.ts";
 import gameRoutes from "./routes/game.ts";
 import statsRoutes from "./routes/stats.ts";
