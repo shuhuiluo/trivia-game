@@ -9,9 +9,15 @@
 // Mock DB factory — pass this to mock.module() in every test file
 // ---------------------------------------------------------------------------
 
+/** Wrap a value with MockError to make the mock chain reject instead of resolve. */
+export class MockError {
+  constructor(public error: any) {}
+}
+
 /** Self-contained factory that returns a Proxy-based fake Drizzle `db`.
  *  Every chained query (select/insert/update/delete) resolves to the next
- *  entry in the `globalThis.__db.results` array. */
+ *  entry in the `globalThis.__db.results` array. If an entry is a MockError,
+ *  the chain rejects with the wrapped error instead. */
 export function DB_MOCK_FACTORY() {
   function createChain() {
     const g = globalThis as any;
@@ -23,7 +29,12 @@ export function DB_MOCK_FACTORY() {
         get(_, prop) {
           if (typeof prop === "symbol") return undefined;
           if (prop === "then") {
-            return (resolve: Function) => resolve(g.__db.results[idx]);
+            const val = g.__db.results[idx];
+            if (val instanceof MockError) {
+              return (_resolve: Function, reject: Function) =>
+                reject(val.error);
+            }
+            return (resolve: Function) => resolve(val);
           }
           return (..._args: any[]) => chain;
         },

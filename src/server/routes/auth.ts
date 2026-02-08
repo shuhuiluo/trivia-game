@@ -11,9 +11,12 @@ import { db } from "../db";
 import { sessions, users } from "../db/schema.ts";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.ts";
 
+const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
+const isProduction = process.env.NODE_ENV === "production";
+
 async function createSession(userId: number): Promise<string> {
   const token = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000);
   await db.insert(sessions).values({ id: token, userId, expiresAt });
   return token;
 }
@@ -36,6 +39,10 @@ const registerRoute = createRoute({
     409: {
       content: { "application/json": { schema: errorSchema } },
       description: "Username already taken",
+    },
+    500: {
+      content: { "application/json": { schema: errorSchema } },
+      description: "Server error",
     },
   },
 });
@@ -102,38 +109,38 @@ const app = new OpenAPIHono<AuthEnv>();
 app.openapi(registerRoute, async c => {
   const { username, password } = c.req.valid("json");
 
-  const existing = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.username, username))
-    .limit(1);
-
-  if (existing.length > 0) {
-    return c.json({ error: "Username already taken" }, 409);
-  }
-
   const passwordHash = await Bun.password.hash(password);
 
-  const [user] = await db
-    .insert(users)
-    .values({ username, passwordHash })
-    .returning({
-      id: users.id,
-      username: users.username,
-      points: users.points,
-    });
+  let user: { id: number; username: string; points: number } | undefined;
+  try {
+    [user] = await db
+      .insert(users)
+      .values({ username, passwordHash })
+      .returning({
+        id: users.id,
+        username: users.username,
+        points: users.points,
+      });
+  } catch (err: unknown) {
+    const code = err instanceof Object ? (err as { code?: string }).code : null;
+    if (code === "23505") {
+      return c.json({ error: "Username already taken" }, 409);
+    }
+    throw err;
+  }
 
   if (!user) {
-    return c.json({ error: "Failed to create user" }, 409);
+    return c.json({ error: "Failed to create user" }, 500);
   }
 
   const token = await createSession(user.id);
 
   setCookie(c, "session", token, {
     httpOnly: true,
+    secure: isProduction,
     sameSite: "Lax",
     path: "/",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: SESSION_TTL_SECONDS,
   });
 
   return c.json(
@@ -167,9 +174,10 @@ app.openapi(loginRoute, async c => {
 
   setCookie(c, "session", token, {
     httpOnly: true,
+    secure: isProduction,
     sameSite: "Lax",
     path: "/",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: SESSION_TTL_SECONDS,
   });
 
   return c.json(

@@ -1,4 +1,12 @@
-import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import {
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 
 import authApp from "../src/server/routes/auth.ts";
 import {
@@ -6,6 +14,7 @@ import {
   getSessionCookie,
   jsonRequest,
   MOCK_USER,
+  MockError,
   setMockResults,
 } from "./helpers.ts";
 
@@ -27,8 +36,9 @@ describe("POST /api/auth/register", () => {
   beforeEach(() => setMockResults([]));
 
   test("creates user with 100 starting points and sets session cookie", async () => {
+    const hashSpy = spyOn(Bun.password, "hash");
+
     setMockResults([
-      [], // select: no existing user
       [{ id: 1, username: "newuser", points: 100 }], // insert: create user
       undefined, // insert: create session
     ]);
@@ -38,6 +48,10 @@ describe("POST /api/auth/register", () => {
       jsonRequest("POST", { username: "newuser", password: "password123" })
     );
     expect(res.status).toBe(200);
+
+    // A-07: verify password hashing was called
+    expect(hashSpy).toHaveBeenCalledWith("password123");
+    hashSpy.mockRestore();
 
     const json = await res.json();
     expect(json.user.id).toBe(1);
@@ -49,9 +63,8 @@ describe("POST /api/auth/register", () => {
   });
 
   test("rejects duplicate username with 409", async () => {
-    setMockResults([
-      [{ id: 5 }], // select: existing user found
-    ]);
+    // A-02: INSERT throws unique constraint violation (Postgres code 23505)
+    setMockResults([new MockError({ code: "23505" })]);
 
     const res = await authApp.request(
       "/api/auth/register",
@@ -77,6 +90,53 @@ describe("POST /api/auth/register", () => {
       jsonRequest("POST", { username: "validuser", password: "short" })
     );
     expect(res.status).toBe(400);
+  });
+
+  test("rejects request with no body", async () => {
+    const res = await authApp.request("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("rejects request with missing password field", async () => {
+    const res = await authApp.request(
+      "/api/auth/register",
+      jsonRequest("POST", { username: "testuser" })
+    );
+    expect(res.status).toBe(400);
+  });
+
+  test("ignores extra fields and succeeds", async () => {
+    setMockResults([
+      [{ id: 2, username: "safe", points: 100 }], // insert: create user
+      undefined, // insert: create session
+    ]);
+
+    const res = await authApp.request(
+      "/api/auth/register",
+      jsonRequest("POST", {
+        username: "safe",
+        password: "password123",
+        points: 999999,
+        id: 1,
+        isAdmin: true,
+      })
+    );
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.user.points).toBe(100); // not 999999
+  });
+
+  test("does not succeed with non-JSON content type", async () => {
+    const res = await authApp.request("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: "username=test&password=password123",
+    });
+    expect(res.ok).toBe(false);
   });
 });
 
