@@ -34,21 +34,21 @@
 
 ## Findings
 
-| ID   | File                 | Location     | Severity | Category | Description                                                                                                                                                  | Resolution |
-| ---- | -------------------- | ------------ | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
-| A-01 | `routes/auth.ts`     | line 132-137 | Major    | Code     | Missing `secure: true` on session cookie in production                                                                                                       | Open       |
-| A-02 | `routes/auth.ts`     | line 105-128 | Major    | Code     | Race condition between duplicate-check SELECT and INSERT allows duplicate usernames under concurrent requests                                                | Open       |
-| A-03 | `routes/auth.ts`     | line 112     | Minor    | Code     | Username enumeration via 409 response on registration                                                                                                        | Open       |
-| A-04 | `routes/auth.ts`     | line 14-18   | Minor    | Design   | `createSession` is a module-level function with a hardcoded 7-day expiry, duplicated as a magic number in the cookie `maxAge`                                | Open       |
-| A-05 | `middleware/auth.ts` | line 8-18    | Minor    | Design   | `AuthEnv` user type is defined manually and drifts from the DB schema; no single source of truth                                                             | Open       |
-| A-06 | `routes/auth.ts`     | line 145-178 | Minor    | Code     | Login does not invalidate existing sessions, allowing unbounded session accumulation per user                                                                | Open       |
-| A-07 | `tests/auth.test.ts` | line 29-49   | Major    | Test     | Register success test does not verify that `Bun.password.hash` was actually called; mock DB silently accepts any values                                      | Open       |
-| A-08 | `tests/auth.test.ts` | line 173-190 | Minor    | Test     | Logout test asserts cookie header contains `"session="` but does not verify the cookie value is empty or that `Max-Age=0` / `Expires` is in the past         | Open       |
-| A-09 | `tests/auth.test.ts` | —            | Major    | Test     | No test for request body with extra/unexpected fields (mass-assignment), no test for missing body, no test for non-JSON Content-Type                         | Open       |
-| A-10 | `tests/auth.test.ts` | —            | Minor    | Test     | No test for SQL-injection-shaped payloads in username (e.g., `"'; DROP TABLE users;--"`) to confirm Zod + parameterized queries reject or safely handle them | Open       |
-| A-11 | `tests/auth.test.ts` | line 90-121  | Minor    | Test     | Login success test does not assert `json.user.id` is the expected value (only checks `username` and `points`)                                                | Open       |
-| A-12 | `middleware/auth.ts` | line 21-58   | Minor    | Design   | Middleware fetches all user stat columns on every authenticated request; for routes that only need the user ID this is unnecessary overhead                  | Open       |
-| A-13 | `tests/auth.test.ts` | —            | Minor    | Test     | No test covering the `createSession` failure path (e.g., DB insert for session throws), which would result in an unhandled promise rejection / 500           | Open       |
+| ID   | File                 | Location     | Severity | Category | Description                                                                                                                                                  | Resolution    |
+| ---- | -------------------- | ------------ | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| A-01 | `routes/auth.ts`     | line 132-137 | Major    | Code     | Missing `secure: true` on session cookie in production                                                                                                       | Fixed (PR #3) |
+| A-02 | `routes/auth.ts`     | line 105-128 | Major    | Code     | Race condition between duplicate-check SELECT and INSERT allows duplicate usernames under concurrent requests                                                | Fixed (PR #3) |
+| A-03 | `routes/auth.ts`     | line 112     | Minor    | Code     | Username enumeration via 409 response on registration                                                                                                        | Deferred      |
+| A-04 | `routes/auth.ts`     | line 14-18   | Minor    | Design   | `createSession` is a module-level function with a hardcoded 7-day expiry, duplicated as a magic number in the cookie `maxAge`                                | Fixed (PR #3) |
+| A-05 | `middleware/auth.ts` | line 8-18    | Minor    | Design   | `AuthEnv` user type is defined manually and drifts from the DB schema; no single source of truth                                                             | Deferred      |
+| A-06 | `routes/auth.ts`     | line 145-178 | Minor    | Code     | Login does not invalidate existing sessions, allowing unbounded session accumulation per user                                                                | Deferred      |
+| A-07 | `tests/auth.test.ts` | line 29-49   | Major    | Test     | Register success test does not verify that `Bun.password.hash` was actually called; mock DB silently accepts any values                                      | Fixed (PR #3) |
+| A-08 | `tests/auth.test.ts` | line 173-190 | Minor    | Test     | Logout test asserts cookie header contains `"session="` but does not verify the cookie value is empty or that `Max-Age=0` / `Expires` is in the past         | Deferred      |
+| A-09 | `tests/auth.test.ts` | —            | Major    | Test     | No test for request body with extra/unexpected fields (mass-assignment), no test for missing body, no test for non-JSON Content-Type                         | Fixed (PR #3) |
+| A-10 | `tests/auth.test.ts` | —            | Minor    | Test     | No test for SQL-injection-shaped payloads in username (e.g., `"'; DROP TABLE users;--"`) to confirm Zod + parameterized queries reject or safely handle them | Deferred      |
+| A-11 | `tests/auth.test.ts` | line 90-121  | Minor    | Test     | Login success test does not assert `json.user.id` is the expected value (only checks `username` and `points`)                                                | Deferred      |
+| A-12 | `middleware/auth.ts` | line 21-58   | Minor    | Design   | Middleware fetches all user stat columns on every authenticated request; for routes that only need the user ID this is unnecessary overhead                  | Deferred      |
+| A-13 | `tests/auth.test.ts` | —            | Minor    | Test     | No test covering the `createSession` failure path (e.g., DB insert for session throws), which would result in an unhandled promise rejection / 500           | Deferred      |
 
 ## Detailed Findings
 

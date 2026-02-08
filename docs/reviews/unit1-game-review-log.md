@@ -34,20 +34,20 @@
 
 ## Findings
 
-| ID   | File           | Location      | Severity | Category | Description                                                                                                                                           | Resolution |
-| ---- | -------------- | ------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| G-01 | `game.ts`      | line 242      | Major    | Code     | `newBalance` computed from stale cached `user.points`, not from DB after UPDATE                                                                       | Open       |
-| G-02 | `game.ts`      | lines 221-240 | Major    | Design   | Two UPDATE statements (game round + user stats) are not wrapped in a transaction                                                                      | Open       |
-| G-03 | `game.ts`      | line 169      | Major    | Code     | `JSON.parse(question.options)` has no try/catch; corrupted DB data crashes the handler                                                                | Open       |
-| G-04 | `schemas.ts`   | line 55       | Minor    | Design   | `answerIndex` hardcoded to `.max(3)` assumes all questions have exactly 4 options                                                                     | Open       |
-| G-05 | `game.ts`      | line 230      | Minor    | Code     | No guard against user points going negative after a lost wager                                                                                        | Open       |
-| G-06 | `game.test.ts` | all           | Major    | Test     | No test verifies that DB mutations receive correct arguments (wager, pointsDelta, userId)                                                             | Open       |
-| G-07 | `game.test.ts` | all           | Major    | Test     | No test for `JSON.parse` failure when `question.options` is malformed                                                                                 | Open       |
-| G-08 | `game.test.ts` | all           | Minor    | Test     | No test for a wager that exactly equals `user.points` (boundary value)                                                                                | Open       |
-| G-09 | `game.test.ts` | line 77       | Minor    | Test     | MOCK_USER uses `userId` field but auth middleware maps it to `user.id`; naming inconsistency obscures what the mock represents                        | Open       |
-| G-10 | `schemas.ts`   | line 40       | Minor    | Design   | `startGameSchema.wager` has no upper bound at the schema level; relies solely on handler-level check                                                  | Open       |
-| G-11 | `game.ts`      | lines 112-135 | Nit      | Code     | "Recently answered" has no time bound -- it excludes all questions ever answered by the user in the category, not just recent ones                    | Open       |
-| G-12 | `game.test.ts` | lines 167-177 | Minor    | Test     | "Invalid session token" test sends a valid cookie format (`session=valid-token`) but sets mock to return empty; does not test malformed cookie values | Open       |
+| ID   | File           | Location      | Severity | Category | Description                                                                                                                                           | Resolution    |
+| ---- | -------------- | ------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| G-01 | `game.ts`      | line 242      | Major    | Code     | `newBalance` computed from stale cached `user.points`, not from DB after UPDATE                                                                       | Fixed (PR #2) |
+| G-02 | `game.ts`      | lines 221-240 | Major    | Design   | Two UPDATE statements (game round + user stats) are not wrapped in a transaction                                                                      | Fixed (PR #2) |
+| G-03 | `game.ts`      | line 169      | Major    | Code     | `JSON.parse(question.options)` has no try/catch; corrupted DB data crashes the handler                                                                | Fixed (PR #2) |
+| G-04 | `schemas.ts`   | line 55       | Minor    | Design   | `answerIndex` hardcoded to `.max(3)` assumes all questions have exactly 4 options                                                                     | Deferred      |
+| G-05 | `game.ts`      | line 230      | Minor    | Code     | No guard against user points going negative after a lost wager                                                                                        | Deferred      |
+| G-06 | `game.test.ts` | all           | Major    | Test     | No test verifies that DB mutations receive correct arguments (wager, pointsDelta, userId)                                                             | Deferred      |
+| G-07 | `game.test.ts` | all           | Major    | Test     | No test for `JSON.parse` failure when `question.options` is malformed                                                                                 | Fixed (PR #2) |
+| G-08 | `game.test.ts` | all           | Minor    | Test     | No test for a wager that exactly equals `user.points` (boundary value)                                                                                | Deferred      |
+| G-09 | `game.test.ts` | line 77       | Minor    | Test     | MOCK_USER uses `userId` field but auth middleware maps it to `user.id`; naming inconsistency obscures what the mock represents                        | Deferred      |
+| G-10 | `schemas.ts`   | line 40       | Minor    | Design   | `startGameSchema.wager` has no upper bound at the schema level; relies solely on handler-level check                                                  | Deferred      |
+| G-11 | `game.ts`      | lines 112-135 | Nit      | Code     | "Recently answered" has no time bound -- it excludes all questions ever answered by the user in the category, not just recent ones                    | Deferred      |
+| G-12 | `game.test.ts` | lines 167-177 | Minor    | Test     | "Invalid session token" test sends a valid cookie format (`session=valid-token`) but sets mock to return empty; does not test malformed cookie values | Deferred      |
 
 ## Detailed Findings
 
